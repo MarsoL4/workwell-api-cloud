@@ -20,35 +20,20 @@ variables:
   - name: webAppName
     value: 'workwell-app'
   - name: sqlServer
-    value: 'workwellsqlserver'  # Ajustar conforme criado pelo script
+    value: 'workwellsqlserver4611'  # Nome do SQL Server criado
   - name: sqlDb
     value: 'workwell'
   - name: sqlAdmin
     value: 'workwelladmin'
-  - name: sqlPassword
-    value: $(SQL_PASSWORD)  # Variável secreta no Azure DevOps
-  - name: apiKeyAdmin
-    value: $(APIKEY_ADMIN)  # Variável secreta
-  - name: apiKeyRH
-    value: $(APIKEY_RH)  # Variável secreta
-  - name: apiKeyPsicologo
-    value: $(APIKEY_PSICOLOGO)  # Variável secreta
-  - name: apiKeyFuncionario
-    value: $(APIKEY_FUNCIONARIO)  # Variável secreta
-  - name: superApiKey
-    value: $(SUPERAPIKEY)  # Variável secreta
 
 pool:
   vmImage: 'ubuntu-latest'
 
 steps:
 # Download Artifacts from Build Pipeline
-- task: DownloadPipelineArtifact@2
+- download: build
   displayName: 'Download Build Artifacts'
-  inputs:
-    buildType: 'current'
-    artifactName: 'drop'
-    targetPath: '$(Pipeline.Workspace)/drop'
+  artifact: drop
 
 # Setup .NET SDK (para EF Core migrations)
 - task: UseDotNet@2
@@ -63,7 +48,7 @@ steps:
   inputs:
     azureSubscription: 'workwell-azure-subscription'  # Service Connection
     appName: '$(webAppName)'
-    package: '$(Pipeline.Workspace)/drop'
+    package: '$(Pipeline.Workspace)/build/drop'
     deploymentMethod: 'auto'
 
 # Configure App Settings (Connection String e API Keys)
@@ -78,12 +63,12 @@ steps:
         --resource-group $(resourceGroup) \
         --name $(webAppName) \
         --settings \
-          "ConnectionStrings__DefaultConnection=Server=tcp:$(sqlServer).database.windows.net,1433;Initial Catalog=$(sqlDb);Persist Security Info=False;User ID=$(sqlAdmin);Password=$(sqlPassword);MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;" \
-          "ApiKeys__Admin=$(apiKeyAdmin)" \
-          "ApiKeys__RH=$(apiKeyRH)" \
-          "ApiKeys__Psicologo=$(apiKeyPsicologo)" \
-          "ApiKeys__Funcionario=$(apiKeyFuncionario)" \
-          "SuperApiKey=$(superApiKey)"
+          "ConnectionStrings__DefaultConnection=Server=tcp:$(sqlServer).database.windows.net,1433;Initial Catalog=$(sqlDb);Persist Security Info=False;User ID=$(sqlAdmin);Password=$(SQL_PASSWORD);MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;" \
+          "ApiKeys__Admin=$(APIKEY_ADMIN)" \
+          "ApiKeys__RH=$(APIKEY_RH)" \
+          "ApiKeys__Psicologo=$(APIKEY_PSICOLOGO)" \
+          "ApiKeys__Funcionario=$(APIKEY_FUNCIONARIO)" \
+          "SuperApiKey=$(SUPERAPIKEY)"
 
 # Apply EF Core Migrations (opcional - se usar migrations automáticas)
 - script: |
@@ -92,7 +77,7 @@ steps:
     dotnet ef database update \
       --project WorkWell.Infrastructure/WorkWell.Infrastructure.csproj \
       --startup-project WorkWell.API/WorkWell.API.csproj \
-      --connection "Server=tcp:$(sqlServer).database.windows.net,1433;Initial Catalog=$(sqlDb);Persist Security Info=False;User ID=$(sqlAdmin);Password=$(sqlPassword);MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+      --connection "Server=tcp:$(sqlServer).database.windows.net,1433;Initial Catalog=$(sqlDb);Persist Security Info=False;User ID=$(sqlAdmin);Password=$(SQL_PASSWORD);MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
   displayName: 'Apply EF Core Migrations to Azure SQL'
   continueOnError: true  # Continua mesmo se migrations falharem (pode já estar aplicado)
 
