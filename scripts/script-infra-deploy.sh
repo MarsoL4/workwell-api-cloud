@@ -29,7 +29,7 @@ echo "== [5] App Service Plan (Linux - PaaS) =="
 az appservice plan create --name "$APPPLAN" --resource-group "$RG" --is-linux --sku B1 --location "$LOCATION"
 
 echo "== [6] Web App (PaaS - .NET 8.0) =="
-az webapp create --resource-group "$RG" --plan "$APPPLAN" --name "$WEBAPP" --runtime "DOTNET|8.0"
+az webapp create --resource-group "$RG" --plan "$APPPLAN" --name "$WEBAPP" --runtime "DOTNETCORE:8.0"
 
 echo "== [7] Configurar AppSettings: ConnectionString/ApiKeys =="
 CONNECTIONSTRING="Server=tcp:$SQLSERVER.database.windows.net,1433;Initial Catalog=$SQLDB;Persist Security Info=False;User ID=$SQLADMIN;Password=$SQLPASSWORD;MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
