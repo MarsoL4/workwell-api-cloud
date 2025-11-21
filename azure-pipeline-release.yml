@@ -14,6 +14,7 @@ resources:
             - main
 
 variables:
+  - group: workwell-secrets 
   - name: resourceGroup
     value: 'workwell-rg'
   - name: webAppName
