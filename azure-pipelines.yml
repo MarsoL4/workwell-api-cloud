@@ -1,0 +1,121 @@
+trigger:
+  branches:
+    include:
+      - main
+
+pr:
+  branches:
+    include:
+      - main
+
+variables:
+  - name: buildConfiguration
+    value: 'Release'
+  - name: imageName
+    value: 'workwell-api'
+  - name: resourceGroup
+    value: 'workwell-rg'
+  - name: webAppName
+    value: 'workwell-app'
+  - name: containerRegistry
+    value: 'workwellacr.azurecr.io'
+  - name: dockerRegistryServiceConnection
+    value: 'workwellacr-service-conn'
+  - name: azureSubscription
+    value: 'workwell-azure-subscription'
+  - name: sqlServer
+    value: 'workwellsqlserver.database.windows.net'
+  - name: sqlDb
+    value: 'workwell'
+  - name: sqlAdmin
+    value: 'workwelladmin'
+  - name: sqlPassword
+    value: $(SQL_PASSWORD)
+  - name: apiKeyAdmin
+    value: $(APIKEY_ADMIN)
+  - name: apiKeyRH
+    value: $(APIKEY_RH)
+  - name: apiKeyPsicologo
+    value: $(APIKEY_PSICOLOGO)
+  - name: apiKeyFuncionario
+    value: $(APIKEY_FUNCIONARIO)
+  - name: superApiKey
+    value: $(SUPERAPIKEY)
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: UseDotNet@2
+  inputs:
+    packageType: 'sdk'
+    version: '8.0.x'
+
+- script: dotnet restore WorkWell.API/WorkWell.API.csproj
+  displayName: 'Restore NuGet packages'
+
+- script: dotnet build WorkWell.API/WorkWell.API.csproj --configuration $(buildConfiguration) --no-restore
+  displayName: 'Build'
+
+- task: DotNetCoreCLI@2
+  displayName: 'Run Unit Tests'
+  inputs:
+    command: 'test'
+    projects: 'WorkWell.Tests/WorkWell.Tests.csproj'
+    arguments: '--configuration $(buildConfiguration) --logger trx'
+
+- script: dotnet publish WorkWell.API/WorkWell.API.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/publish
+  displayName: 'Publish'
+
+- task: PublishBuildArtifacts@1
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)/publish'
+    artifactName: 'drop'
+    publishLocation: 'Container'
+
+# EF Core Migration Step (aplica migrations no Azure SQL cloud)
+- script: |
+    dotnet tool install --global dotnet-ef
+    export PATH="$PATH:$HOME/.dotnet/tools"
+    dotnet ef database update \
+      --project WorkWell.Infrastructure/WorkWell.Infrastructure.csproj \
+      --startup-project WorkWell.API/WorkWell.API.csproj \
+      --connection "Server=tcp:$(sqlServer),1433;Initial Catalog=$(sqlDb);Persist Security Info=False;User ID=$(sqlAdmin);Password=$(sqlPassword);MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+  displayName: 'Apply EF Core migrations to Azure SQL'
+
+# Build and push Docker image to ACR
+- task: Docker@2
+  displayName: Build and Push Docker image
+  inputs:
+    containerRegistry: '$(dockerRegistryServiceConnection)'
+    repository: '$(imageName)'
+    command: 'buildAndPush'
+    Dockerfile: 'WorkWell.API/Dockerfile'
+    tags: |
+      $(Build.BuildId)
+      latest
+
+# Deploy container to Azure Web App and configure sensitive settings
+- task: AzureCLI@2
+  displayName: Deploy to Azure Web App (Container)
+  inputs:
+    azureSubscription: '$(azureSubscription)'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      az webapp config container set \
+        --resource-group $(resourceGroup) \
+        --name $(webAppName) \
+        --docker-custom-image-name $(containerRegistry)/$(imageName):$(Build.BuildId) \
+        --docker-registry-server-url https://$(containerRegistry)
+      # Atualiza/se os appsettings (string de conexão/API keys) protegidos por env
+      az webapp config appsettings set \
+        --resource-group $(resourceGroup) \
+        --name $(webAppName) \
+        --settings \
+          "ConnectionStrings__DefaultConnection=Server=tcp:$(sqlServer),1433;Initial Catalog=$(sqlDb);Persist Security Info=False;User ID=$(sqlAdmin);Password=$(sqlPassword);MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;" \
+          "ApiKeys__Admin=$(apiKeyAdmin)" \
+          "ApiKeys__RH=$(apiKeyRH)" \
+          "ApiKeys__Psicologo=$(apiKeyPsicologo)" \
+          "ApiKeys__Funcionario=$(apiKeyFuncionario)" \
+          "SuperApiKey=$(superApiKey)"
