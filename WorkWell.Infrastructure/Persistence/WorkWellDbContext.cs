@@ -42,6 +42,29 @@ namespace WorkWell.Infrastructure.Persistence
         {
             base.OnModelCreating(modelBuilder);
 
+            // Mapear todas as tabelas para os nomes corretos do banco (singular)
+            // O EF Core pluraliza por padrão, mas o script SQL usa nomes no singular
+            modelBuilder.Entity<Empresa>().ToTable("Empresa");
+            modelBuilder.Entity<Setor>().ToTable("Setor");
+            modelBuilder.Entity<Funcionario>().ToTable("Funcionario");
+            modelBuilder.Entity<PerfilEmocional>().ToTable("PerfilEmocional");
+            modelBuilder.Entity<AtividadeBemEstar>().ToTable("AtividadeBemEstar");
+            modelBuilder.Entity<ParticipacaoAtividade>().ToTable("ParticipacaoAtividade");
+            modelBuilder.Entity<AgendaFuncionario>().ToTable("AgendaFuncionario");
+            modelBuilder.Entity<ItemAgenda>().ToTable("ItemAgenda");
+            modelBuilder.Entity<Enquete>().ToTable("Enquete");
+            modelBuilder.Entity<RespostaEnquete>().ToTable("RespostaEnquete");
+            modelBuilder.Entity<IndicadoresEmpresa>().ToTable("IndicadoresEmpresa");
+            modelBuilder.Entity<Notificacao>().ToTable("Notificacao");
+            modelBuilder.Entity<ChatAnonimo>().ToTable("ChatAnonimo");
+            modelBuilder.Entity<ConsultaPsicologica>().ToTable("ConsultaPsicologica");
+            modelBuilder.Entity<SOSemergencia>().ToTable("SOSemergencia");
+            modelBuilder.Entity<Denuncia>().ToTable("Denuncia");
+            modelBuilder.Entity<InvestigacaoDenuncia>().ToTable("InvestigacaoDenuncia");
+            modelBuilder.Entity<AvaliacaoProfunda>().ToTable("AvaliacaoProfunda");
+            modelBuilder.Entity<MoodCheck>().ToTable("MoodCheck");
+            modelBuilder.Entity<RiscoPsicossocial>().ToTable("RiscoPsicossocial");
+
             // Relacionamento 1:1 Funcionario <-> PerfilEmocional
             modelBuilder.Entity<Funcionario>()
                 .HasOne(f => f.PerfilEmocional)
