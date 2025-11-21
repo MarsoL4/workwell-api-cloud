@@ -4,8 +4,8 @@ using WorkWell.API.Filters;
 using WorkWell.API.HealthChecks;
 using WorkWell.API.Security;
 using WorkWell.Application.DependencyInjection;
-using WorkWell.Infrastructure.Configurations;
-using WorkWell.Infrastructure.Seed;
+using WorkWell.Infrastructure.Persistence;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,9 +13,12 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAuthentication("ApiKeyScheme")
     .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, DummyAuthenticationHandler>("ApiKeyScheme", _ => { });
 
-// Add Infrastructure and DbContext (Oracle connection)
-builder.Services.AddInfrastructure(builder.Configuration);
+// Add Application services
 builder.Services.AddApplication();
+
+// Add DbContext - Azure SQL
+builder.Services.AddDbContext<WorkWellDbContext>(options =>
+    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add controllers with global model validation filter
 builder.Services.AddControllers(opt =>
@@ -38,7 +41,7 @@ builder.Services.AddApiKeySecurity(builder.Configuration);
 
 var app = builder.Build();
 
-// ApiVersionDescriptionProvider é NECESSÁRIO para o Swagger UI suportar versionamento
+// ApiVersionDescriptionProvider necessário para o Swagger UI suportar versionamento
 var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 
 // Swagger UI com Versionamento
@@ -53,7 +56,6 @@ app.UseSwaggerUI(options =>
 
 // Global Error + API Key Middlewares
 app.UseMiddleware<WorkWell.API.Middleware.ErrorHandlingMiddleware>();
-
 app.UseMiddleware<ApiKeyMiddleware>();
 
 app.UseAuthentication();
@@ -71,17 +73,10 @@ app.Use(async (context, next) =>
     }
 });
 
-using (var scope = app.Services.CreateScope())
-{
-    var context = scope.ServiceProvider.GetRequiredService<WorkWell.Infrastructure.Persistence.WorkWellDbContext>();
-    DbInitializer.Seed(context);
-}
-
 app.UseHttpsRedirection();
 
 // Health check endpoint
 app.MapHealthChecks("/health");
-
 app.MapControllers();
 
 app.Run();
