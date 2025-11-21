@@ -11,6 +11,7 @@ pr:
   autoCancel: false
 
 variables:
+  - group: workwell-secrets
   - name: buildConfiguration
     value: 'Release'
   - name: dotnetVersion
