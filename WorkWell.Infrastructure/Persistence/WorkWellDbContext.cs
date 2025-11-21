@@ -94,6 +94,18 @@ namespace WorkWell.Infrastructure.Persistence
                 .WithMany()
                 .HasForeignKey(a => a.SetorId)
                 .OnDelete(DeleteBehavior.Restrict);
+
+            // Mapear coluna FuncionarioDenuncianteId explicitamente (EF tenta usar DenuncianteId por causa do relacionamento)
+            modelBuilder.Entity<Denuncia>()
+                .HasOne(d => d.Denunciante)
+                .WithMany()
+                .HasForeignKey(d => d.FuncionarioDenuncianteId)
+                .OnDelete(DeleteBehavior.SetNull);
+
+            // Mapear coluna explicitamente para evitar confusão
+            modelBuilder.Entity<Denuncia>()
+                .Property(d => d.FuncionarioDenuncianteId)
+                .HasColumnName("FuncionarioDenuncianteId");
         }
     }
 }
