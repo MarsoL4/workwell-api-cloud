@@ -28,9 +28,9 @@ namespace WorkWell.Infrastructure.Configurations
     {
         public static IServiceCollection AddInfrastructure(this IServiceCollection services, IConfiguration configuration)
         {
-            // Use a connection string named "Oracle"
+            // Use a connection string named "DefaultConnection" (Azure SQL)
             services.AddDbContext<WorkWellDbContext>(options =>
-                options.UseOracle(configuration.GetConnectionString("Oracle")));
+                options.UseSqlServer(configuration.GetConnectionString("DefaultConnection")));
 
             // Empresa & Organização
             services.AddScoped<IEmpresaRepository, EmpresaRepository>();
