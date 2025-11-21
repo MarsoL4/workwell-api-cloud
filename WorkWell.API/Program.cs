@@ -4,8 +4,7 @@ using WorkWell.API.Filters;
 using WorkWell.API.HealthChecks;
 using WorkWell.API.Security;
 using WorkWell.Application.DependencyInjection;
-using WorkWell.Infrastructure.Persistence;
-using Microsoft.EntityFrameworkCore;
+using WorkWell.Infrastructure.Configurations;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -13,12 +12,11 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddAuthentication("ApiKeyScheme")
     .AddScheme<Microsoft.AspNetCore.Authentication.AuthenticationSchemeOptions, DummyAuthenticationHandler>("ApiKeyScheme", _ => { });
 
+// Add Infrastructure (DbContext e Repositories) - Azure SQL
+builder.Services.AddInfrastructure(builder.Configuration);
+
 // Add Application services
 builder.Services.AddApplication();
-
-// Add DbContext - Azure SQL
-builder.Services.AddDbContext<WorkWellDbContext>(options =>
-    options.UseSqlServer(builder.Configuration.GetConnectionString("DefaultConnection")));
 
 // Add controllers with global model validation filter
 builder.Services.AddControllers(opt =>
@@ -41,7 +39,7 @@ builder.Services.AddApiKeySecurity(builder.Configuration);
 
 var app = builder.Build();
 
-// ApiVersionDescriptionProvider necessário para o Swagger UI suportar versionamento
+// ApiVersionDescriptionProvider necessï¿½rio para o Swagger UI suportar versionamento
 var provider = app.Services.GetRequiredService<IApiVersionDescriptionProvider>();
 
 // Swagger UI com Versionamento
@@ -69,7 +67,7 @@ app.Use(async (context, next) =>
     if (context.Response.StatusCode == 403 && !context.Response.HasStarted)
     {
         context.Response.ContentType = "application/json";
-        await context.Response.WriteAsync("{\"statusCode\":403,\"message\":\"Permissão insuficiente para este endpoint\"}");
+        await context.Response.WriteAsync("{\"statusCode\":403,\"message\":\"Permissï¿½o insuficiente para este endpoint\"}");
     }
 });
 

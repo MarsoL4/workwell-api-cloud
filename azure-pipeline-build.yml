@@ -1,0 +1,73 @@
+# Pipeline de BUILD - WorkWell API
+# Executa: Restore, Build, Testes, Publicação de Artefatos
+# Trigger: Apenas após Merge via PR na branch main
+
+trigger: none  # Não roda automaticamente em commits diretos
+
+pr:
+  branches:
+    include:
+      - main
+  autoCancel: false
+
+variables:
+  - name: buildConfiguration
+    value: 'Release'
+  - name: dotnetVersion
+    value: '8.0.x'
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+# Restore
+- task: UseDotNet@2
+  displayName: 'Setup .NET SDK'
+  inputs:
+    packageType: 'sdk'
+    version: '$(dotnetVersion)'
+
+- script: dotnet restore WorkWell.sln
+  displayName: 'Restore NuGet packages'
+
+# Build
+- script: dotnet build WorkWell.sln --configuration $(buildConfiguration) --no-restore
+  displayName: 'Build Solution'
+
+# Run Tests
+- task: DotNetCoreCLI@2
+  displayName: 'Run Unit Tests (XUnit)'
+  inputs:
+    command: 'test'
+    projects: 'WorkWell.Tests/WorkWell.Tests.csproj'
+    arguments: '--configuration $(buildConfiguration) --logger "trx;LogFileName=test-results.trx" --collect:"XPlat Code Coverage" --results-directory $(Agent.TempDirectory)/test-results'
+    publishTestResults: false
+
+# Publish Test Results
+- task: PublishTestResults@2
+  displayName: 'Publish Test Results (XUnit)'
+  inputs:
+    testResultsFormat: 'XUnit'
+    testResultsFiles: '$(Agent.TempDirectory)/test-results/**/*.trx'
+    testRunTitle: 'Unit Tests - WorkWell API'
+    failTaskOnFailedTests: false
+
+# Publish Code Coverage (opcional, mas recomendado)
+- task: PublishCodeCoverageResults@1
+  displayName: 'Publish Code Coverage'
+  inputs:
+    codeCoverageTool: 'Cobertura'
+    summaryFileLocation: '$(Agent.TempDirectory)/test-results/**/coverage.cobertura.xml'
+    failIfCoverageEmpty: false
+
+# Publish Artifacts
+- script: dotnet publish WorkWell.API/WorkWell.API.csproj --configuration $(buildConfiguration) --output $(Build.ArtifactStagingDirectory)/publish --no-build
+  displayName: 'Publish Application'
+
+- task: PublishBuildArtifacts@1
+  displayName: 'Publish Build Artifacts'
+  inputs:
+    pathToPublish: '$(Build.ArtifactStagingDirectory)/publish'
+    artifactName: 'drop'
+    publishLocation: 'Container'
+

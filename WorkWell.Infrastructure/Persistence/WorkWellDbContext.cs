@@ -8,6 +8,7 @@ using WorkWell.Domain.Entities.AvaliacoesEmocionais;
 using WorkWell.Domain.Entities.Notificacoes;
 using WorkWell.Domain.Entities.OmbudMind;
 using WorkWell.Domain.Entities.Agenda;
+using AdesaoSetor = WorkWell.Domain.Entities.Indicadores.AdesaoSetor;
 
 namespace WorkWell.Infrastructure.Persistence
 {
@@ -48,9 +49,28 @@ namespace WorkWell.Infrastructure.Persistence
                 .HasForeignKey<PerfilEmocional>(p => p.FuncionarioId)
                 .OnDelete(DeleteBehavior.Cascade);
 
-            // Psicologo herda Funcionario
+            // Psicologo herda Funcionario - Table per Type (TPT)
+            // Alinhado com script-bd.sql que cria tabela separada Psicologo
             modelBuilder.Entity<Psicologo>()
+                .ToTable("Psicologo")
                 .HasBaseType<Funcionario>();
+
+            // AdesaoSetor - relacionamento com IndicadoresEmpresa
+            modelBuilder.Entity<IndicadoresEmpresa>()
+                .HasMany(i => i.AdesaoPorSetor)
+                .WithOne()
+                .HasForeignKey("IndicadoresEmpresaId")
+                .OnDelete(DeleteBehavior.Cascade);
+
+            modelBuilder.Entity<AdesaoSetor>()
+                .ToTable("AdesaoSetor")
+                .HasKey(a => a.Id);
+
+            modelBuilder.Entity<AdesaoSetor>()
+                .HasOne(a => a.Setor)
+                .WithMany()
+                .HasForeignKey(a => a.SetorId)
+                .OnDelete(DeleteBehavior.Restrict);
         }
     }
 }

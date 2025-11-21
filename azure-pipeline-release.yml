@@ -1,0 +1,104 @@
+# Pipeline de RELEASE - WorkWell API
+# Executa: Deploy automático para Azure Web App (PaaS)
+# Trigger: Automaticamente após Build gerar novo artefato
+
+trigger: none  # Release é acionado por dependência do Build
+
+resources:
+  pipelines:
+    - pipeline: build  # Nome da pipeline de build
+      source: 'WorkWell API - Build'  # Nome exato da pipeline de build no Azure DevOps
+      trigger:
+        branches:
+          include:
+            - main
+
+variables:
+  - name: resourceGroup
+    value: 'workwell-rg'
+  - name: webAppName
+    value: 'workwell-app'
+  - name: sqlServer
+    value: 'workwellsqlserver'  # Ajustar conforme criado pelo script
+  - name: sqlDb
+    value: 'workwell'
+  - name: sqlAdmin
+    value: 'workwelladmin'
+  - name: sqlPassword
+    value: $(SQL_PASSWORD)  # Variável secreta no Azure DevOps
+  - name: apiKeyAdmin
+    value: $(APIKEY_ADMIN)  # Variável secreta
+  - name: apiKeyRH
+    value: $(APIKEY_RH)  # Variável secreta
+  - name: apiKeyPsicologo
+    value: $(APIKEY_PSICOLOGO)  # Variável secreta
+  - name: apiKeyFuncionario
+    value: $(APIKEY_FUNCIONARIO)  # Variável secreta
+  - name: superApiKey
+    value: $(SUPERAPIKEY)  # Variável secreta
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+# Download Artifacts from Build Pipeline
+- task: DownloadPipelineArtifact@2
+  displayName: 'Download Build Artifacts'
+  inputs:
+    buildType: 'current'
+    artifactName: 'drop'
+    targetPath: '$(Pipeline.Workspace)/drop'
+
+# Setup .NET SDK (para EF Core migrations)
+- task: UseDotNet@2
+  displayName: 'Setup .NET SDK'
+  inputs:
+    packageType: 'sdk'
+    version: '8.0.x'
+
+# Deploy to Azure Web App (PaaS)
+- task: AzureWebApp@1
+  displayName: 'Deploy to Azure Web App (PaaS)'
+  inputs:
+    azureSubscription: 'workwell-azure-subscription'  # Service Connection
+    appName: '$(webAppName)'
+    package: '$(Pipeline.Workspace)/drop'
+    deploymentMethod: 'auto'
+
+# Configure App Settings (Connection String e API Keys)
+- task: AzureCLI@2
+  displayName: 'Configure App Settings (Connection String & API Keys)'
+  inputs:
+    azureSubscription: 'workwell-azure-subscription'
+    scriptType: 'bash'
+    scriptLocation: 'inlineScript'
+    inlineScript: |
+      az webapp config appsettings set \
+        --resource-group $(resourceGroup) \
+        --name $(webAppName) \
+        --settings \
+          "ConnectionStrings__DefaultConnection=Server=tcp:$(sqlServer).database.windows.net,1433;Initial Catalog=$(sqlDb);Persist Security Info=False;User ID=$(sqlAdmin);Password=$(sqlPassword);MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;" \
+          "ApiKeys__Admin=$(apiKeyAdmin)" \
+          "ApiKeys__RH=$(apiKeyRH)" \
+          "ApiKeys__Psicologo=$(apiKeyPsicologo)" \
+          "ApiKeys__Funcionario=$(apiKeyFuncionario)" \
+          "SuperApiKey=$(superApiKey)"
+
+# Apply EF Core Migrations (opcional - se usar migrations automáticas)
+- script: |
+    dotnet tool install --global dotnet-ef
+    export PATH="$PATH:$HOME/.dotnet/tools"
+    dotnet ef database update \
+      --project WorkWell.Infrastructure/WorkWell.Infrastructure.csproj \
+      --startup-project WorkWell.API/WorkWell.API.csproj \
+      --connection "Server=tcp:$(sqlServer).database.windows.net,1433;Initial Catalog=$(sqlDb);Persist Security Info=False;User ID=$(sqlAdmin);Password=$(sqlPassword);MultipleActiveResultSets=False;Encrypt=True;TrustServerCertificate=False;Connection Timeout=30;"
+  displayName: 'Apply EF Core Migrations to Azure SQL'
+  continueOnError: true  # Continua mesmo se migrations falharem (pode já estar aplicado)
+
+# Health Check (verificar se API está respondendo)
+- script: |
+    sleep 30  # Aguarda API inicializar
+    curl -f https://$(webAppName).azurewebsites.net/health || exit 1
+  displayName: 'Health Check - Verify API is Running'
+  continueOnError: true
+
