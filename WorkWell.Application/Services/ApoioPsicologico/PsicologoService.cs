@@ -64,7 +64,7 @@ namespace WorkWell.Application.Services.ApoioPsicologico
             psicologoExistente.Crp = dto.Crp;
             psicologoExistente.Ativo = dto.Ativo;
             psicologoExistente.SetorId = dto.SetorId;
-            psicologoExistente.EmpresaId = dto.EmpresaId; // <-- ADICIONADO!
+            psicologoExistente.EmpresaId = dto.EmpresaId;
 
             await _repo.UpdateAsync(psicologoExistente);
         }
@@ -84,7 +84,7 @@ namespace WorkWell.Application.Services.ApoioPsicologico
             Crp = e.Crp,
             Ativo = e.Ativo,
             SetorId = e.SetorId,
-            EmpresaId = e.EmpresaId // <-- ADICIONADO!
+            EmpresaId = e.EmpresaId
         };
 
         private static Psicologo FromDto(PsicologoDto d) => new()
@@ -97,7 +97,7 @@ namespace WorkWell.Application.Services.ApoioPsicologico
             Crp = d.Crp,
             Ativo = d.Ativo,
             SetorId = d.SetorId,
-            EmpresaId = d.EmpresaId // <-- ADICIONADO!
+            EmpresaId = d.EmpresaId
         };
     }
 }
