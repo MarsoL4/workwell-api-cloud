@@ -1,5 +1,11 @@
 # WorkWell API - Plataforma de Bem-Estar Corporativo
 
+## 👤 Integrantes
+
+- **Enzo Giuseppe Marsola** – RM: 556310, Turma: 2TDSPK  
+- **Rafael de Souza Pinto** – RM: 555130, Turma: 2TDSPY  
+- **Luiz Paulo F. Fernandes** – RM: 555497, Turma: 2TDSPF
+
 ## 📋 Sobre o Projeto
 
 WorkWell é uma API .NET 8.0 desenvolvida para gerenciar o bem-estar emocional e psicológico de funcionários em empresas. A plataforma oferece funcionalidades como avaliações emocionais, consultas psicológicas, atividades de bem-estar, enquetes, denúncias anônimas e indicadores de saúde mental organizacional.
@@ -43,20 +49,30 @@ graph TB
     style F fill:#0078d4
 ```
 
+#### Observações sobre o Diagrama
+Este diagrama reflete de forma fiel o deploy implementado:
+- Azure Boards são usados para rastrear e vincular Work Items aos pushes/commits/PRs.
+- O código fica no Azure Repos e a branch principal é protegida.
+- Azure Pipelines Build é acionada automaticamente via trigger após merge via PR na branch principal.
+- Azure Pipelines Release é acionada automaticamente após Build, realizando o deploy no Azure Web App PaaS.
+- O Web App se conecta ao Azure SQL Database, ambos criados via script e mantidos dentro do mesmo Resource Group.
+
+A automação entre Boards ⇄ Repos ⇄ Pipelines está representada tanto pelo trigger (após merge) quanto pelos links e uso de Work Items. O fluxo CI/CD está 100% automatizado — não exige intervenção manual para build ou release.
+
 ### Fluxo de CI/CD
 
-1. **Desenvolvimento**: Developer faz commit e cria Pull Request
-2. **Azure Boards**: Work Item vinculado ao PR
-3. **Azure Repos**: Branch protegida com revisor obrigatório
-4. **Azure Pipelines - Build**: 
-   - Executa após merge do PR
-   - Restore, Build, Testes (XUnit)
-   - Publica artefatos e resultados de testes
-5. **Azure Pipelines - Release**:
-   - Executa automaticamente após Build
-   - Deploy para Azure Web App (PaaS)
-   - Configura App Settings
-   - Aplica EF Core Migrations
+1. **Desenvolvimento**: Developer faz commit e cria Pull Request vinculada a um Work Item do Azure Boards.
+2. **Revisão**: A branch principal (main) exige revisor obrigatório, vinculação de Work Item e merge via PR.
+3. **Build Pipeline** (`azure-pipeline-build.yml`, raiz do projeto): 
+   - Executa após merge do PR, nunca por push direto.
+   - Roda restore, build, testes (XUnit) e publica artefatos e resultados de testes.
+4. **Release Pipeline** (`azure-pipeline-release.yml`, raiz do projeto):
+   - Executa automaticamente após Build gerar artefato.
+   - Realiza deploy no Azure Web App PaaS.
+   - Publica configurações de ambiente e connection strings.
+   - Aplica EF Core migrations, se necessário.
+
+O deploy realizado segue rigorosamente este fluxo, e todos os recursos (Resource Group, DB, WebApp) são provisionados e utilizados conforme o diagrama acima.
 
 ## 🚀 Tecnologias
 
@@ -72,17 +88,20 @@ graph TB
 
 ```
 WorkWell.sln
-├── WorkWell.API/              # Camada de apresentação (Controllers, Middleware)
-├── WorkWell.Application/      # Camada de aplicação (Services, DTOs)
-├── WorkWell.Domain/           # Camada de domínio (Entities, Interfaces)
-├── WorkWell.Infrastructure/   # Camada de infraestrutura (Repositories, DbContext)
-├── WorkWell.Tests/            # Testes unitários (XUnit)
-├── scripts/                   # Scripts de infraestrutura e banco
+├── WorkWell.API/                # Camada de apresentação (Controllers, Middleware)
+├── WorkWell.Application/        # Camada de aplicação (Services, DTOs)
+├── WorkWell.Domain/             # Camada de domínio (Entities, Interfaces)
+├── WorkWell.Infrastructure/     # Camada de infraestrutura (Repositories, DbContext)
+├── WorkWell.Tests/              # Testes unitários (XUnit)
+├── scripts/                     # Scripts de infraestrutura e banco
 │   ├── script-infra-deploy.sh
 │   └── script-bd.sql
-├── azure-pipeline-build.yml   # Pipeline de Build
-└── azure-pipeline-release.yml # Pipeline de Release
+├── azure-pipeline-build.yml     # Pipeline de Build (raiz)
+├── azure-pipeline-release.yml   # Pipeline de Release (raiz)
 ```
+
+> **Observação**:  
+> O projeto não faz uso de containerização Docker no deploy em nuvem, optando totalmente por recursos PaaS (App Service + Azure SQL).
 
 ## 🔐 Autenticação
 
@@ -119,7 +138,6 @@ X-API-Key: <sua-api-key>
   "politicaBemEstar": "Aqui o respeito e o cuidado são prioridades!"
 }
 ```
-
 **Response (201 Created):**
 ```json
 {
@@ -202,7 +220,6 @@ X-API-Key: <sua-api-key>
   "politicaBemEstar": "Aqui o respeito e o cuidado são prioridades!"
 }
 ```
-
 **Response (204 No Content)**
 
 #### DELETE - DELETE `/api/v1/Empresa/{id}`
@@ -227,7 +244,6 @@ X-API-Key: <sua-api-key>
   "setorId": 1
 }
 ```
-
 **Nota:** `cargo` é um enum:
 - `0` = Admin
 - `1` = RH
@@ -308,7 +324,6 @@ X-API-Key: <sua-api-key>
   "setorId": 1
 }
 ```
-
 **Response (204 No Content)**
 
 #### DELETE - DELETE `/api/v1/Funcionario/{id}`
@@ -322,7 +337,7 @@ X-API-Key: <sua-api-key>
 ### Pré-requisitos
 
 - Azure CLI instalado e configurado
-- Conta Azure com permissões para criar recursos
+- Conta Azure com permissões para criar recursos em nuvem
 - Azure DevOps configurado
 
 ### 1. Provisionamento de Infraestrutura
@@ -344,7 +359,9 @@ O script cria:
 
 #### Variáveis Secretas
 
-Configure as seguintes variáveis no Azure DevOps (Library → Variable Groups):
+**Antes de rodar qualquer pipeline, é obrigatório configurar variáveis secretas usando Library → Variable Groups do Azure DevOps. Nunca exponha valores sensíveis diretamente no código, nem hardcode nos arquivos yaml.**
+
+Configure as seguintes variáveis secretas:
 
 - `SQL_PASSWORD` (Secret)
 - `APIKEY_ADMIN` (Secret)
@@ -363,30 +380,29 @@ Crie uma Service Connection do tipo "Azure Resource Manager" com o nome:
 Configure a branch `main` como protegida:
 - Revisor obrigatório
 - Vinculação de Work Item obrigatória
-- Revisor padrão (seu RM)
+- Revisor padrão coloque você mesmo
 
 ### 3. Pipelines
 
 #### Build Pipeline
 
-1. Crie uma nova pipeline no Azure DevOps
-2. Selecione "Azure Repos Git"
-3. Escolha o arquivo `azure-pipeline-build.yml`
-4. Nomeie como: `WorkWell API - Build`
+- Arquivo: `azure-pipeline-build.yml` (raiz do projeto)
+- Pipeline: **WorkWell API - Build**
+- Definição: Executa **exclusivamente após merge via PR para a branch main**.
+- Validação: Roda restore, build, testes (XUnit), publica artefatos e resultados dos testes.
 
 #### Release Pipeline
 
-1. Crie uma nova pipeline no Azure DevOps
-2. Selecione "Azure Repos Git"
-3. Escolha o arquivo `azure-pipeline-release.yml`
-4. Nomeie como: `WorkWell API - Release`
-5. Configure a dependência do Build Pipeline
+- Arquivo: `azure-pipeline-release.yml` (raiz do projeto)
+- Pipeline: **WorkWell API - Release**
+- Definição: Executa **automaticamente após conclusão da Build e geração de artefato**.
+- Validação: Realiza deploy no Azure Web App (PaaS), configura settings e connection strings, faz health check.
 
 ## 🧪 Testes
 
 Os testes são executados automaticamente na pipeline de Build usando XUnit.
 
-Para executar localmente:
+Para executar manualmente:
 
 ```bash
 dotnet test WorkWell.Tests/WorkWell.Tests.csproj
@@ -394,7 +410,7 @@ dotnet test WorkWell.Tests/WorkWell.Tests.csproj
 
 ## 📊 Health Check
 
-A API expõe um endpoint de health check:
+A API expõe um endpoint de health check para validação do ambiente em produção e CI/CD:
 
 ```
 GET /health
@@ -410,15 +426,7 @@ https://<webapp-name>.azurewebsites.net/swagger
 
 ## 🔒 Segurança
 
-- API Keys protegidas como variáveis secretas no Azure DevOps
-- Connection Strings não expostas no código
-- Firewall do Azure SQL configurado
-- HTTPS habilitado no Azure Web App
-
-## 📄 Licença
-
-Este projeto foi desenvolvido para fins acadêmicos.
-
-## 👥 Autores
-
-Desenvolvido como parte da disciplina Advanced Business Development with .NET.
+- API Keys protegidas como variáveis secretas no Azure DevOps (não são expostas no repositório)
+- Connection Strings nunca ficam hardcoded; sempre via Azure App Settings e variáveis de ambiente
+- Firewall do Azure SQL configurado para permitir acesso apenas ao Web App
+- HTTPS habilitado no Azure Web App por padrão
