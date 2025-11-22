@@ -8,7 +8,7 @@ namespace WorkWell.API.SwaggerExamples
     {
         public FuncionarioDto GetExamples()
         {
-            // Para criar um novo funcionário (POST): não enviar Id
+            // Exemplo para banco vazio, informando EmpresaId válidos (ex: 1)
             return new FuncionarioDto
             {
                 Nome = "Carlos Silva",
@@ -17,7 +17,8 @@ namespace WorkWell.API.SwaggerExamples
                 TokenEmpresa = "token-ftw-001",
                 Cargo = Cargo.Funcionario,
                 Ativo = true,
-                SetorId = 2 // TI
+                SetorId = 1,         // Setor RH
+                EmpresaId = 1
             };
         }
     }

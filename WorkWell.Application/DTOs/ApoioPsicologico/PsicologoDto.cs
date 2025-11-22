@@ -10,5 +10,6 @@
         public string Crp { get; set; } = null!;
         public bool Ativo { get; set; }
         public long SetorId { get; set; }
+        public long EmpresaId { get; set; }
     }
 }

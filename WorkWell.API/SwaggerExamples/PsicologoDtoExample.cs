@@ -7,7 +7,7 @@ namespace WorkWell.API.SwaggerExamples
     {
         public PsicologoDto GetExamples()
         {
-            // Para POST, não enviar Id
+            // Exemplo para banco vazio, preenchendo EmpresaId e SetorId válidos/criados!
             return new PsicologoDto
             {
                 Nome = "Dra. Helena Alves",
@@ -16,7 +16,8 @@ namespace WorkWell.API.SwaggerExamples
                 TokenEmpresa = "token-ftw-001",
                 Crp = "06/123456",
                 Ativo = true,
-                SetorId = 1 // RH
+                SetorId = 1,          // Setor RH
+                EmpresaId = 1
             };
         }
     }

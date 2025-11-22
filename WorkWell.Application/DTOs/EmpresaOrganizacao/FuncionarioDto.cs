@@ -12,5 +12,6 @@ namespace WorkWell.Application.DTOs.EmpresaOrganizacao
         public Cargo Cargo { get; set; }
         public bool Ativo { get; set; }
         public long SetorId { get; set; }
+        public long EmpresaId { get; set; } 
     }
 }
