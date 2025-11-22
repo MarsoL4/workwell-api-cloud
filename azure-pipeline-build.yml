@@ -2,7 +2,10 @@
 # Executa: Restore, Build, Testes, Publicação de Artefatos
 # Trigger: Apenas após Merge via PR na branch main
 
-trigger: none  # Não roda automaticamente em commits diretos
+trigger:
+  branches:
+    include:
+      - main
 
 pr:
   branches:
