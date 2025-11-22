@@ -17,29 +17,21 @@ WorkWell é uma API .NET 8.0 desenvolvida para gerenciar o bem-estar emocional e
 ![Arquitetura Pós-Deploy da WorkWell API](diagrama/Diagrama_Macro_WorkWell_API-deploy.png)
 
 #### Observações sobre o Diagrama
-Este diagrama reflete de forma fiel o deploy implementado:
-- Azure Boards são usados para rastrear e vincular Work Items aos pushes/commits/PRs.
-- O código fica no Azure Repos e a branch principal é protegida.
-- Azure Pipelines Build é acionada automaticamente via trigger após merge via PR na branch principal.
-- Azure Pipelines Release é acionada automaticamente após Build, realizando o deploy no Azure Web App PaaS.
-- O Web App se conecta ao Azure SQL Database, ambos criados via script e mantidos dentro do mesmo Resource Group.
 
-A automação entre Boards ⇄ Repos ⇄ Pipelines está representada tanto pelo trigger (após merge) quanto pelos links e uso de Work Items. O fluxo CI/CD está 100% automatizado — não exige intervenção manual para build ou release.
+Este diagrama representa integralmente o deploy e o fluxo da solução WorkWell API:
 
-### Fluxo de CI/CD
+- Todos os recursos em nuvem (Resource Group, Azure SQL Database, Azure Web App) são **provisionados via script CLI** e inicializados com o script-bd.sql.
+- As configurações de segurança (API Keys, Connection String) são gerenciadas por **Variable Groups (Secrets)** do Azure DevOps, nunca expostas no código-fonte.
+- **Azure DevOps Boards** são utilizados para rastrear e vincular Work Items aos commits, branches e Pull Requests; toda entrega ou alteração passa pelo fluxo de ALM.
+- O **repositório Git (Azure Repos)** armazena o código-fonte, o histórico de branch, merges e oferece proteção de branch principal (main), com políticas de revisor obrigatório e vinculação de Work Item.
+- **Build Pipeline** é acionada exclusivamente após merge via PR na main, nunca por commits diretos, garantindo validação automatizada e publicação de artefatos/resultados de testes (XUnit).
+- **Release Pipeline** é acionada automaticamente após Build, realizando deploy contínuo no Azure Web App PaaS, configurando secrets, settings e connection strings direto no ambiente cloud.
+- Após o deploy, valida-se o ambiente via endpoint de **health check**, garantindo monitoramento CI/CD.
+- O Web App consome configurações de ambiente e secrets, conecta-se de forma segura ao **Azure SQL Database (PaaS)**, e nunca expõe dados sensíveis no appsettings.json.
+- Todo fluxo de autenticação (API Key e roles), rastreamento, persistência (EF Core) e endpoints (CRUD/REST) estão documentados e implementados conforme os requisitos de entrega.
+- Não há containers nem ACR/ACI – a solução é 100% PaaS e está alinhada ao padrão exigido.
 
-1. **Desenvolvimento**: Developer faz commit e cria Pull Request vinculada a um Work Item do Azure Boards.
-2. **Revisão**: A branch principal (main) exige revisor obrigatório, vinculação de Work Item e merge via PR.
-3. **Build Pipeline** (`azure-pipeline-build.yml`, raiz do projeto): 
-   - Executa após merge do PR, nunca por push direto.
-   - Roda restore, build, testes (XUnit) e publica artefatos e resultados de testes.
-4. **Release Pipeline** (`azure-pipeline-release.yml`, raiz do projeto):
-   - Executa automaticamente após Build gerar artefato.
-   - Realiza deploy no Azure Web App PaaS.
-   - Publica configurações de ambiente e connection strings.
-   - Aplica EF Core migrations, se necessário.
-
-O deploy realizado segue rigorosamente este fluxo, e todos os recursos (Resource Group, DB, WebApp) são provisionados e utilizados conforme o diagrama acima.
+O diagrama detalha visualmente a integração entre DevOps, Cloud, Segurança, Infraestrutura, CI/CD automatizado, monitoramento e a estrutura de serviços e controllers da aplicação.
 
 ## 🚀 Tecnologias
 
