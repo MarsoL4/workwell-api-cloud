@@ -12,7 +12,7 @@ WorkWell é uma API .NET 8.0 desenvolvida para gerenciar o bem-estar emocional e
 
 ## 🏗️ Arquitetura
 
-### Diagrama Macro da Arquitetura
+### Arquitetura Pós-Deploy da WorkWell API:
 
 ![Arquitetura Pós-Deploy da WorkWell API](diagrama/Diagrama_Macro_WorkWell_API-deploy.png)
 
