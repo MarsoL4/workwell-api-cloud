@@ -67,6 +67,7 @@ namespace WorkWell.Application.Services.EmpresaOrganizacao
             funcionarioExistente.Cargo = funcionarioDto.Cargo;
             funcionarioExistente.Ativo = funcionarioDto.Ativo;
             funcionarioExistente.SetorId = funcionarioDto.SetorId;
+            funcionarioExistente.EmpresaId = funcionarioDto.EmpresaId; // <-- ADICIONADO!
 
             await _funcionarioRepository.UpdateAsync(funcionarioExistente);
         }
@@ -87,7 +88,8 @@ namespace WorkWell.Application.Services.EmpresaOrganizacao
                 TokenEmpresa = funcionario.TokenEmpresa,
                 Cargo = funcionario.Cargo,
                 Ativo = funcionario.Ativo,
-                SetorId = funcionario.SetorId
+                SetorId = funcionario.SetorId,
+                EmpresaId = funcionario.EmpresaId // <-- ADICIONADO!
             };
         }
 
@@ -102,7 +104,8 @@ namespace WorkWell.Application.Services.EmpresaOrganizacao
                 TokenEmpresa = dto.TokenEmpresa,
                 Cargo = dto.Cargo,
                 Ativo = dto.Ativo,
-                SetorId = dto.SetorId
+                SetorId = dto.SetorId,
+                EmpresaId = dto.EmpresaId // <-- ADICIONADO!
             };
         }
     }

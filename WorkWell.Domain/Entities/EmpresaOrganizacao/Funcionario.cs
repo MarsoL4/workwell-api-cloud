@@ -23,6 +23,7 @@ namespace WorkWell.Domain.Entities.EmpresaOrganizacao
         public Cargo Cargo { get; set; }
         public bool Ativo { get; set; } = true;
         public long SetorId { get; set; }
+        public long EmpresaId { get; set; }
         public Setor? Setor { get; set; }
         public PerfilEmocional? PerfilEmocional { get; set; }
     }

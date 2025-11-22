@@ -52,7 +52,7 @@ namespace WorkWell.Application.Services.ApoioPsicologico
 
         public async Task UpdateAsync(PsicologoDto dto)
         {
-            // Busca a entidade existente (inheritance Funcionario) para evitar erro de tracking duplicado no EF Core
+            // Busca a entidade existente para evitar erro de tracking duplicado no EF Core
             var psicologoExistente = await _repo.GetByIdAsync(dto.Id);
             if (psicologoExistente == null)
                 throw new KeyNotFoundException("Psicólogo não encontrado.");
@@ -64,6 +64,7 @@ namespace WorkWell.Application.Services.ApoioPsicologico
             psicologoExistente.Crp = dto.Crp;
             psicologoExistente.Ativo = dto.Ativo;
             psicologoExistente.SetorId = dto.SetorId;
+            psicologoExistente.EmpresaId = dto.EmpresaId; // <-- ADICIONADO!
 
             await _repo.UpdateAsync(psicologoExistente);
         }
@@ -82,7 +83,8 @@ namespace WorkWell.Application.Services.ApoioPsicologico
             TokenEmpresa = e.TokenEmpresa,
             Crp = e.Crp,
             Ativo = e.Ativo,
-            SetorId = e.SetorId
+            SetorId = e.SetorId,
+            EmpresaId = e.EmpresaId // <-- ADICIONADO!
         };
 
         private static Psicologo FromDto(PsicologoDto d) => new()
@@ -94,7 +96,8 @@ namespace WorkWell.Application.Services.ApoioPsicologico
             TokenEmpresa = d.TokenEmpresa,
             Crp = d.Crp,
             Ativo = d.Ativo,
-            SetorId = d.SetorId
+            SetorId = d.SetorId,
+            EmpresaId = d.EmpresaId // <-- ADICIONADO!
         };
     }
 }
