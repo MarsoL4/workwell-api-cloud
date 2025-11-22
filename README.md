@@ -200,7 +200,8 @@ X-API-Key: <sua-api-key>
   "tokenEmpresa": "token-ftw-001",
   "cargo": 2,
   "ativo": true,
-  "setorId": 1
+  "setorId": 1,
+  "empresaId": 1
 }
 ```
 **Nota:** `cargo` é um enum:
@@ -219,7 +220,8 @@ X-API-Key: <sua-api-key>
   "tokenEmpresa": "token-ftw-001",
   "cargo": 2,
   "ativo": true,
-  "setorId": 1
+  "setorId": 1,
+  "empresaId": 1
 }
 ```
 
@@ -235,7 +237,8 @@ X-API-Key: <sua-api-key>
   "tokenEmpresa": "token-ftw-001",
   "cargo": 2,
   "ativo": true,
-  "setorId": 1
+  "setorId": 1,
+  "empresaId": 1
 }
 ```
 
@@ -250,14 +253,15 @@ X-API-Key: <sua-api-key>
   "totalPages": 1,
   "data": [
     {
-      "id": 1,
+      "id": 0,
       "nome": "Carlos Silva",
       "email": "carlos@futurework.com",
       "senha": "func123",
       "tokenEmpresa": "token-ftw-001",
       "cargo": 2,
       "ativo": true,
-      "setorId": 1
+      "setorId": 1,
+      "empresaId": 1
     }
   ],
   "links": {
@@ -280,7 +284,8 @@ X-API-Key: <sua-api-key>
   "tokenEmpresa": "token-ftw-001",
   "cargo": 2,
   "ativo": true,
-  "setorId": 1
+  "setorId": 1,
+  "empresaId": 1
 }
 ```
 **Response (204 No Content)**
