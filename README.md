@@ -14,40 +14,7 @@ WorkWell é uma API .NET 8.0 desenvolvida para gerenciar o bem-estar emocional e
 
 ### Diagrama Macro da Arquitetura
 
-```mermaid
-graph TB
-    subgraph "Azure DevOps"
-        A[Azure Boards<br/>Work Items]
-        B[Azure Repos<br/>Git Repository]
-        C[Azure Pipelines<br/>Build & Release]
-    end
-    
-    subgraph "Azure Cloud"
-        D[Resource Group<br/>workwell-rg]
-        E[Azure SQL Database<br/>PaaS]
-        F[Azure Web App<br/>PaaS - .NET 8.0]
-    end
-    
-    subgraph "Desenvolvimento"
-        G[Developer]
-        H[Pull Request]
-    end
-    
-    G -->|Commit| B
-    H -->|Merge| B
-    B -->|Trigger| C
-    C -->|Build Artifacts| C
-    C -->|Deploy| F
-    F -->|Connection String| E
-    A -.->|Links| B
-    A -.->|Links| H
-    
-    style A fill:#0078d4
-    style B fill:#0078d4
-    style C fill:#0078d4
-    style E fill:#0078d4
-    style F fill:#0078d4
-```
+![Arquitetura Pós-Deploy da WorkWell API](diagrama/Diagrama_Macro_WorkWell_API-deploy.png)
 
 #### Observações sobre o Diagrama
 Este diagrama reflete de forma fiel o deploy implementado:
