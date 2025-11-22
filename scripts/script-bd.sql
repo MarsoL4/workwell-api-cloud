@@ -25,7 +25,7 @@ CREATE TABLE Setor (
     FOREIGN KEY (EmpresaId) REFERENCES Empresa(Id)
 );
 
--- FUNCIONARIO
+-- FUNCIONARIO (corrigido: inclui EmpresaId e FK)
 CREATE TABLE Funcionario (
     Id BIGINT IDENTITY(1,1) PRIMARY KEY,
     Nome NVARCHAR(100) NOT NULL,
@@ -36,7 +36,9 @@ CREATE TABLE Funcionario (
     Ativo BIT NOT NULL DEFAULT 1,
     SetorId BIGINT NOT NULL,
     PerfilEmocionalId BIGINT NULL,
-    FOREIGN KEY (SetorId) REFERENCES Setor(Id)
+    EmpresaId BIGINT NOT NULL,
+    FOREIGN KEY (SetorId) REFERENCES Setor(Id),
+    FOREIGN KEY (EmpresaId) REFERENCES Empresa(Id)
     -- PerfilEmocional FK criada abaixo
 );
 
@@ -162,12 +164,13 @@ CREATE TABLE ChatAnonimo (
     FOREIGN KEY (PsicologoId) REFERENCES Funcionario(Id)
 );
 
--- PSICOLOGO (herda Funcionario)
--- Os campos adicionais do psicólogo:
+-- PSICOLOGO (corrigido: inclui EmpresaId e FK)
 CREATE TABLE Psicologo (
     Id BIGINT PRIMARY KEY, -- ID igual ao Funcionario
     Crp NVARCHAR(30) NOT NULL,
-    FOREIGN KEY (Id) REFERENCES Funcionario(Id)
+    EmpresaId BIGINT NOT NULL,
+    FOREIGN KEY (Id) REFERENCES Funcionario(Id),
+    FOREIGN KEY (EmpresaId) REFERENCES Empresa(Id)
 );
 
 -- CONSULTA PSICOLOGICA
