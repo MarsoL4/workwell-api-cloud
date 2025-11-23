@@ -385,7 +385,7 @@ GET /health
 A documentação Swagger está disponível em:
 
 ```
-https://<webapp-name>.azurewebsites.net/swagger
+https://workwell-app.azurewebsites.net/swagger/index.html
 ```
 
 ## 🔒 Segurança
